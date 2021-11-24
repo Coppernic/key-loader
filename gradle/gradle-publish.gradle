@@ -1,0 +1,71 @@
+apply plugin: 'maven-publish'
+apply plugin: 'org.jetbrains.dokka'
+apply plugin: "nu.studer.credentials"
+
+task dokkaJavadocJar(type: Jar, dependsOn: "dokkaJavadoc") {
+    classifier = 'javadoc'
+    from dokkaJavadoc.outputDirectory
+}
+
+String userNexus = project.hasProperty('nexusUser') ?
+        project.nexusUser : (project.credentials.nexus_user ?
+        project.credentials.nexus_user : (project.properties.containsKey("nexus_user") ?
+        project.properties.nexus_user.toString() : (System.getenv('NEXUS_USER') ?
+        System.getenv('NEXUS_USER') : "")))
+String passwordNexus = project.hasProperty('nexusPassword') ?
+        project.nexusPassword : (project.credentials.nexus_password ?
+        project.credentials.nexus_password : (project.properties.containsKey("nexus_password") ?
+        project.properties.nexus_password.toString() : (System.getenv('NEXUS_PASSWORD') ?
+        System.getenv('NEXUS_PASSWORD') : "")))
+
+def isSnapshot() {
+    return versioning.info.versionNumber.qualifier.contains("SNAPSHOT") ||
+            (versioning.info.versionNumber.major == 0
+                    && versioning.info.versionNumber.minor == 0
+                    && versioning.info.versionNumber.patch == 0
+            )
+}
+
+publishing {
+    publications {
+        MrzParserLib(MavenPublication) {
+            groupId GROUP
+            artifactId "$rootProject.name"
+            version versioning.info.display
+
+            from components.java
+
+            artifact dokkaJavadocJar
+            artifact kotlinSourcesJar
+
+            pom {
+                name = rootProject.name
+                description = POM_DESCRIPTION
+                url = POM_URL
+                licenses {
+                    license {
+                        name = POM_LICENCE_NAME
+                        url = POM_LICENCE_URL
+                        distribution = POM_LICENCE_DIST
+                    }
+                }
+                scm {
+                    url = POM_SCM_URL
+                    connection = POM_SCM_CONNECTION
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            String urlRelease = "https://nexus.coppernic.fr/repository/libs-release-coppernic/"
+            String urlSnapshot = "https://nexus.coppernic.fr/repository/libs-snapshot-coppernic/"
+            url = (isSnapshot() ? urlSnapshot : urlRelease)
+            credentials {
+                username = userNexus
+                password = passwordNexus
+            }
+        }
+    }
+}
+
