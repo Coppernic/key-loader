@@ -2,12 +2,12 @@ package fr.coppernic.lib.key.walker
 
 import fr.coppernic.lib.key.model.KeyType
 import fr.coppernic.lib.log.KeyLoaderDefines
-import java.io.File
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.shouldBeNull
 import org.amshove.kluent.shouldHaveSize
 import org.junit.Before
 import org.junit.Test
+import java.io.File
 
 class KeyWalkerTest {
 
